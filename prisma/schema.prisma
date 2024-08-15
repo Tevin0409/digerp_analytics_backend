@@ -1,0 +1,2790 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model absentism {
+  id               Int       @id @default(autoincrement())
+  emp_no           String?   @db.VarChar(200)
+  absentism_reason String?   @db.VarChar(200)
+  date             DateTime? @db.Date
+  trans_id         Int?
+
+  @@unique([emp_no, date, trans_id], map: "pri")
+  @@map("0_absentism")
+}
+
+model absentism_reasons {
+  id           Int     @id @default(autoincrement())
+  reason       String? @db.VarChar(200)
+  paid         Int?
+  abbreviation String? @db.Char(2)
+  leave_type   String? @db.VarChar(50)
+  days_limit   Float   @default(365)
+
+  @@map("0_absentism_reasons")
+}
+
+model alerts {
+  id      Int    @id @default(autoincrement())
+  bcode   Int
+  bname   String @db.VarChar(200)
+  uid     Int
+  uname   String @db.VarChar(100)
+  timein  String @db.VarChar(30)
+  timeout String @db.VarChar(30)
+
+  @@map("0_alerts")
+}
+
+model areas {
+  area_code   Int     @id @default(autoincrement())
+  description String  @unique(map: "description") @default("") @db.VarChar(60)
+  inactive    Boolean @default(false)
+  salesman    String  @db.VarChar(50)
+
+  @@map("0_areas")
+}
+
+model areas_locations {
+  location_code Int     @id @default(autoincrement())
+  description   String  @unique(map: "description") @default("") @db.VarChar(60)
+  inactive      Boolean @default(false)
+  area          String  @db.VarChar(50)
+
+  @@map("0_areas_locations")
+}
+
+model attachments {
+  id          Int      @id @default(autoincrement()) @db.UnsignedInt
+  description String   @default("") @db.VarChar(60)
+  type_no     Int      @default(0)
+  trans_no    Int      @default(0)
+  unique_name String   @default("") @db.VarChar(60)
+  tran_date   DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  filename    String   @default("") @db.VarChar(60)
+  filesize    Int      @default(0)
+  filetype    String   @default("") @db.VarChar(60)
+
+  @@index([type_no, trans_no], map: "type_no")
+  @@map("0_attachments")
+}
+
+model attendace {
+  id                Int       @id @default(autoincrement())
+  date              DateTime? @db.Date
+  name_             String?   @db.VarChar(200)
+  work_number       String?   @db.VarChar(50)
+  attendance_record String?   @db.Text
+  first_record      String?   @db.VarChar(20)
+  last_record       String?   @db.VarChar(20)
+  total_time        String?   @db.VarChar(20)
+  temparature       String    @db.Text
+
+  @@map("0_attendace")
+}
+
+model audit_trail {
+  id          Int      @id @default(autoincrement())
+  type        Int      @default(0) @db.UnsignedSmallInt
+  trans_no    Int      @default(0) @db.UnsignedInt
+  user        Int      @default(0) @db.UnsignedSmallInt
+  stamp       DateTime @default(now()) @db.Timestamp(0)
+  description String?  @db.VarChar(60)
+  fiscal_year Int      @default(0)
+  gl_date     DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  gl_seq      Int?     @db.UnsignedInt
+
+  @@index([fiscal_year, gl_date, gl_seq], map: "Seq")
+  @@index([type, trans_no], map: "Type_and_Number")
+  @@index([description], map: "audit_trail_desc_idx")
+  @@map("0_audit_trail")
+}
+
+model audit_trail_operations {
+  id          Int       @id @default(autoincrement())
+  trans_type  String?   @db.VarChar(200)
+  trans_no    String?   @db.VarChar(100)
+  description String?   @db.VarChar(400)
+  user        String?   @db.VarChar(200)
+  trans_time  DateTime? @db.Timestamp(0)
+
+  @@index([trans_no], map: "op_type")
+  @@index([trans_time], map: "time_idx")
+  @@index([trans_type], map: "trans_type")
+  @@map("0_audit_trail_operations")
+}
+
+model bank_accounts {
+  account_code             String   @default("") @db.VarChar(15)
+  account_type             Int      @default(0) @db.SmallInt
+  bank_account_name        String   @default("") @db.VarChar(60)
+  bank_account_number      String   @default("") @db.VarChar(100)
+  bank_name                String   @default("") @db.VarChar(60)
+  bank_address             String?  @db.TinyText
+  bank_curr_code           String   @default("") @db.Char(3)
+  dflt_curr_act            Boolean  @default(false)
+  id                       Int      @id @default(autoincrement()) @db.SmallInt
+  bank_charge_act          String   @default("") @db.VarChar(15)
+  last_reconciled_date     DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  ending_reconcile_balance Float    @default(0)
+  inactive                 Boolean  @default(false)
+  manual_mpesa             Int      @default(0) @db.SmallInt
+  ttp                      String   @db.VarChar(50)
+
+  @@index([account_code], map: "account_code")
+  @@index([bank_account_name], map: "bank_account_name")
+  @@index([bank_account_number], map: "bank_account_number")
+  @@map("0_bank_accounts")
+}
+
+model bank_trans {
+  id             Int       @id @default(autoincrement())
+  type           Int?      @db.SmallInt
+  trans_no       Int?
+  bank_act       String    @default("") @db.VarChar(15)
+  ref            String?   @db.VarChar(40)
+  trans_date     DateTime  @default(dbgenerated("('0000-00-00')")) @db.Date
+  amount         Float?
+  dimension_id   Int       @default(0)
+  dimension2_id  Int       @default(0)
+  person_type_id Int       @default(0)
+  person_id      Bytes?    @db.TinyBlob
+  reconciled     DateTime? @db.Date
+  cheque_no      String?   @db.TinyText
+  old_bank_id    Int
+
+  @@index([bank_act, ref], map: "bank_act")
+  @@index([bank_act, reconciled], map: "bank_act_2")
+  @@index([bank_act, trans_date], map: "bank_act_3")
+  @@index([type, trans_no], map: "type")
+  @@map("0_bank_trans")
+}
+
+model bom {
+  id               Int    @default(autoincrement())
+  parent           String @default("") @db.Char(20)
+  component        String @default("") @db.Char(20)
+  workcentre_added Int    @default(0)
+  loc_code         String @default("") @db.Char(5)
+  quantity         Float  @default(1)
+
+  @@id([parent, component, workcentre_added, loc_code])
+  @@index([component], map: "component")
+  @@index([id], map: "id")
+  @@index([loc_code], map: "loc_code")
+  @@index([parent, loc_code], map: "parent")
+  @@index([workcentre_added], map: "workcentre_added")
+  @@map("0_bom")
+}
+
+model budget_trans {
+  id            Int      @id @default(autoincrement())
+  tran_date     DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  account       String   @default("") @db.VarChar(15)
+  memo_         String   @db.TinyText
+  amount        Float    @default(0)
+  dimension_id  Int?     @default(0)
+  dimension2_id Int?     @default(0)
+
+  @@index([account, tran_date, dimension_id, dimension2_id], map: "Account")
+  @@map("0_budget_trans")
+}
+
+model chart_class {
+  cid        String  @id @db.VarChar(3)
+  class_name String  @default("") @db.VarChar(60)
+  ctype      Boolean @default(false)
+  inactive   Boolean @default(false)
+
+  @@map("0_chart_class")
+}
+
+model chart_master {
+  account_code  String  @id @default("") @db.VarChar(15)
+  account_code2 String  @default("") @db.VarChar(15)
+  account_name  String  @db.VarChar(100)
+  account_type  String  @default("0") @db.VarChar(10)
+  inactive      Boolean @default(false)
+
+  @@index([account_name], map: "account_name")
+  @@index([account_type, account_code], map: "accounts_by_type")
+  @@map("0_chart_master")
+}
+
+model chart_types {
+  id       String  @id @db.VarChar(10)
+  name     String  @default("") @db.VarChar(60)
+  class_id String  @default("") @db.VarChar(3)
+  parent   String  @default("-1") @db.VarChar(10)
+  inactive Boolean @default(false)
+
+  @@index([class_id], map: "class_id")
+  @@index([name], map: "name")
+  @@map("0_chart_types")
+}
+
+model comments {
+  type  Int       @default(0)
+  id    Int       @id @default(autoincrement())
+  date_ DateTime? @default(dbgenerated("('0000-00-00')")) @db.Date
+  memo_ String?   @db.TinyText
+
+  @@index([type, id], map: "type_and_id")
+  @@map("0_comments")
+}
+
+model communications {
+  id                   Int       @id @default(autoincrement())
+  salesman_id          Int
+  communication_medium String
+  client_type          String
+  lead_id              Int?
+  customer_id          Int?
+  activity_action      String
+  notes                String
+  appointment_notes    String?
+  appointment_date     DateTime? @db.Date
+  date                 DateTime  @default(now()) @db.DateTime(0)
+
+  @@map("0_communications")
+}
+
+model companies {
+  id                       Int       @id
+  company_name             String?   @db.VarChar(200)
+  company_no               String?   @db.VarChar(100)
+  address                  String?   @db.VarChar(200)
+  phone_no                 String?   @db.VarChar(100)
+  email_address            String?   @db.VarChar(100)
+  trans_date               DateTime? @db.Date
+  database_name            String?   @db.VarChar(100)
+  date_approved            DateTime? @db.Date
+  approved                 Int?      @default(0)
+  trial                    Int?
+  trial_expiry_date        DateTime? @db.Date
+  subscription_expiry_date DateTime? @db.Timestamp(0)
+  inactive                 Int?      @default(0)
+
+  @@map("0_companies")
+}
+
+model counties {
+  id          Int    @id @default(autoincrement())
+  county_name String @db.VarChar(200)
+
+  @@map("0_counties")
+}
+
+model credit_status {
+  id                 Int     @id @default(autoincrement())
+  reason_description String  @unique(map: "reason_description") @default("") @db.Char(100)
+  dissallow_invoices Boolean @default(false)
+  inactive           Boolean @default(false)
+
+  @@map("0_credit_status")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model crm_categories {
+  id          Int     @id @default(autoincrement())
+  type        String  @db.VarChar(20)
+  action      String  @db.VarChar(20)
+  name        String  @db.VarChar(30)
+  description String  @db.TinyText
+  system      Boolean @default(false)
+  inactive    Boolean @default(false)
+
+  @@unique([type, action], map: "type")
+  @@unique([type, name], map: "type_2")
+  @@map("0_crm_categories")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model crm_contacts {
+  id        Int     @id @default(autoincrement())
+  person_id Int     @default(0)
+  type      String  @db.VarChar(20)
+  action    String  @db.VarChar(20)
+  entity_id String? @db.VarChar(11)
+
+  @@index([type, action], map: "type")
+  @@map("0_crm_contacts")
+}
+
+model crm_persons {
+  id       Int     @id @default(autoincrement())
+  ref      String  @db.VarChar(30)
+  name     String  @db.VarChar(60)
+  name2    String? @db.VarChar(60)
+  address  String? @db.TinyText
+  phone    String? @db.VarChar(30)
+  phone2   String? @db.VarChar(30)
+  fax      String? @db.VarChar(30)
+  email    String? @db.VarChar(100)
+  lang     String? @db.Char(5)
+  notes    String  @db.TinyText
+  inactive Boolean @default(false)
+
+  @@index([ref], map: "ref")
+  @@map("0_crm_persons")
+}
+
+model currencies {
+  currency      String  @default("") @db.VarChar(60)
+  curr_abrev    String  @id @default("") @db.Char(3)
+  curr_symbol   String  @default("") @db.VarChar(10)
+  country       String  @default("") @db.VarChar(100)
+  hundreds_name String  @default("") @db.VarChar(15)
+  auto_update   Boolean @default(true)
+  inactive      Boolean @default(false)
+
+  @@map("0_currencies")
+}
+
+model cust_allocations {
+  id              Int      @id @default(autoincrement())
+  person_id       Int?
+  amt             Float?
+  date_alloc      DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  trans_no_from   Int?
+  trans_type_from Int?
+  trans_no_to     Int?
+  trans_type_to   Int?
+
+  @@unique([person_id, trans_type_from, trans_no_from, trans_type_to, trans_no_to], map: "trans_type_from")
+  @@index([trans_type_from, trans_no_from], map: "From")
+  @@index([trans_type_to, trans_no_to], map: "To")
+  @@map("0_cust_allocations")
+}
+
+model cust_branch {
+  branch_code              Int      @default(autoincrement())
+  debtor_no                Int      @default(0)
+  br_name                  String   @default("") @db.VarChar(60)
+  branch_ref               String   @default("") @db.VarChar(30)
+  br_address               String   @db.TinyText
+  area                     Int?
+  area_location            Int      @default(1)
+  salesman                 Int      @default(0)
+  default_location         String   @default("") @db.VarChar(5)
+  tax_group_id             Int?
+  sales_account            String   @default("") @db.VarChar(15)
+  sales_discount_account   String   @default("") @db.VarChar(15)
+  receivables_account      String   @default("") @db.VarChar(15)
+  payment_discount_account String   @default("") @db.VarChar(15)
+  default_ship_via         Int      @default(1)
+  br_post_address          String   @db.TinyText
+  group_no                 Int      @default(0)
+  notes                    String   @db.TinyText
+  bank_account             String?  @db.VarChar(60)
+  inactive                 Boolean  @default(false)
+  lat                      String   @db.VarChar(20)
+  lon                      String   @db.VarChar(20)
+  rad                      String   @db.VarChar(20)
+  sts                      Boolean  @default(false)
+  address                  String   @db.VarChar(300)
+  trans_date               DateTime @default(now()) @db.Timestamp(0)
+
+  @@id([branch_code, debtor_no])
+  @@index([branch_ref], map: "branch_ref")
+  @@index([group_no], map: "group_no")
+  @@map("0_cust_branch")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model cust_sales_notes {
+  id         Int      @id @default(autoincrement())
+  route_id   Int?
+  cust_id    Int?
+  user_id    Int?
+  notes      String?   @db.VarChar(300)
+  trans_date DateTime? @db.Date
+  trans_time String?   @db.VarChar(30)
+  lat        String?   @db.VarChar(200)
+  lon        String?   @db.VarChar(200)
+  address    String?   @db.VarChar(200)
+
+  @@index([id], map: "id")
+  @@map("0_cust_sales_notes")
+}
+
+model customer_payment {
+  id                 Int      @id @default(autoincrement())
+  customer_option    String   @db.VarChar(100)
+  customer_option_id Int
+  mode_payment       Int
+  amount             String   @db.VarChar(20)
+  reference          String   @db.VarChar(50)
+  payment_date       String   @db.VarChar(30)
+  add_date           String   @db.VarChar(30)
+  user               Int
+  publish            Boolean  @default(true)
+  posted             Boolean? @default(false)
+
+  @@map("0_customer_payment")
+}
+
+model debtor_deliveries {
+  id         Int      @id @default(autoincrement())
+  trans_no   String   @db.VarChar(50)
+  shift      String   @db.VarChar(50)
+  trans_date DateTime @db.Date
+  trans_type String   @db.VarChar(100)
+  signature  String   @db.Text
+  trans_time DateTime @default(now()) @db.Timestamp(0)
+
+  @@map("0_debtor_deliveries")
+}
+
+model debtor_trans {
+  trans_no                Int       @default(0) @db.UnsignedInt
+  type                    Int       @default(0) @db.UnsignedSmallInt
+  version                 Boolean   @default(false)
+  debtor_no               Int
+  branch_code             Int       @default(-1)
+  tran_date               DateTime  @default(dbgenerated("('0000-00-00')")) @db.Date
+  due_date                DateTime  @default(dbgenerated("('0000-00-00')")) @db.Date
+  reference               String    @default("") @db.VarChar(60)
+  tpe                     Int       @default(0)
+  order_                  Int       @default(0)
+  ov_amount               Float     @default(0)
+  ov_gst                  Float     @default(0)
+  ov_freight              Float     @default(0)
+  ov_freight_tax          Float     @default(0)
+  ov_discount             Float     @default(0)
+  alloc                   Float     @default(0)
+  prep_amount             Float     @default(0)
+  rate                    Float     @default(1)
+  ship_via                Int?
+  dimension_id            Int       @default(0)
+  dimension2_id           Int       @default(0)
+  payment_terms           Int?
+  tax_included            Boolean   @default(false)
+  vehicle                 String?   @default("0") @db.VarChar(50)
+  driver                  String    @db.VarChar(10)
+  shift                   String?   @default("0") @db.VarChar(50)
+  user_name               String    @default("0") @db.VarChar(50)
+  receipt_no              String?   @db.VarChar(100)
+  user_id                 Int
+  original_amt_alloc      Float     @default(0)
+  dispatched              Int       @default(0) @db.SmallInt
+  dispatched_by           String    @db.VarChar(50)
+  dispatch_time           DateTime? @db.Timestamp(0)
+  dispatched_to           String    @db.VarChar(100)
+  collected               Int       @default(0) @db.SmallInt
+  collection_time         DateTime? @db.Timestamp(0)
+  collection_user         String    @db.VarChar(100)
+  scu_inv_no              String    @db.VarChar(100)
+  scu_id                  String    @db.VarChar(100)
+  cur_rct_no              Int
+  total_rct_no            Int
+  intrl_data              String    @db.VarChar(200)
+  rect_sign               String    @db.VarChar(200)
+  short_url               String    @db.VarChar(200)
+  short_id                String    @db.VarChar(200)
+  long_url                String    @db.Text
+  sdc_date_time           DateTime  @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  cust_lpo_no             String    @db.VarChar(200)
+  cust_grn_no             String    @db.VarChar(200)
+  middlewareInvoiceNumber String    @db.VarChar(200)
+  controlCode             String    @db.VarChar(200)
+  qrCode                  String    @db.Text
+  qrDate                  String    @db.VarChar(50)
+  qrResponse              String    @db.VarChar(100)
+  etims_time              DateTime  @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  etims_user              String    @db.VarChar(30)
+  cust_name               String    @db.VarChar(200)
+
+  @@id([type, trans_no, debtor_no])
+  @@index([branch_code, debtor_no], map: "branch_code_match_debtor")
+  @@index([debtor_no, branch_code], map: "debtor_no")
+  @@index([order_], map: "order_")
+  @@index([tran_date], map: "tran_date")
+  @@map("0_debtor_trans")
+}
+
+model debtor_trans_details {
+  id                Int     @id @default(autoincrement())
+  debtor_trans_no   Int?
+  debtor_trans_type Int?
+  stock_id          String  @default("") @db.VarChar(20)
+  description       String? @db.TinyText
+  unit_price        Float   @default(0)
+  unit_tax          Float   @default(0)
+  quantity          Float   @default(0)
+  discount_percent  Float   @default(0)
+  standard_cost     Float   @default(0)
+  qty_done          Float   @default(0)
+  src_id            Int
+  qty_delivered     Float   @default(0)
+  batch_noo         String  @db.VarChar(100)
+
+  @@index([debtor_trans_type, debtor_trans_no], map: "Transaction")
+  @@index([src_id], map: "src_id")
+  @@map("0_debtor_trans_details")
+}
+
+model debtors_master {
+  debtor_no               Int       @id @default(autoincrement())
+  name                    String    @unique(map: "unique_customer_name") @default("") @db.VarChar(100)
+  debtor_ref              String    @unique(map: "debtor_ref") @db.VarChar(30)
+  address                 String?   @db.TinyText
+  phone_num               String    @default("07") @db.VarChar(100)
+  tax_id                  String    @default("") @db.VarChar(55)
+  curr_code               String    @default("") @db.Char(3)
+  sales_type              Int       @default(1)
+  dimension_id            Int       @default(0)
+  dimension2_id           Int       @default(0)
+  credit_status           Int       @default(0)
+  payment_terms           Int?
+  discount                Float     @default(0)
+  pymt_discount           Float     @default(0)
+  credit_limit            Float     @default(1000) @db.Float
+  notes                   String    @db.TinyText
+  inactive                Boolean   @default(false)
+  credit_invoices_allowed Int?      @default(2)
+  trans_date              DateTime? @default(now()) @db.Timestamp(0)
+
+  @@index([name], map: "name")
+  @@map("0_debtors_master")
+}
+
+model dept {
+  id     Int    @id @default(autoincrement())
+  dname  String @unique(map: "dname") @db.VarChar(200)
+  code   String @unique(map: "code") @db.VarChar(200)
+  status Int
+
+  @@map("0_dept")
+}
+
+model designations {
+  id     Int     @id @default(autoincrement())
+  code   String? @db.VarChar(10)
+  dname  String? @db.VarChar(30)
+  status Int?    @default(0)
+
+  @@map("0_designations")
+}
+
+model dimensions {
+  id        Int      @id @default(autoincrement())
+  reference String   @unique(map: "reference") @default("") @db.VarChar(60)
+  name      String   @default("") @db.VarChar(60)
+  type_     Boolean  @default(true)
+  closed    Boolean  @default(false)
+  date_     DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  due_date  DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+
+  @@index([date_], map: "date_")
+  @@index([due_date], map: "due_date")
+  @@index([type_], map: "type_")
+  @@map("0_dimensions")
+}
+
+model drivers {
+  id             Int      @id @default(autoincrement())
+  driver_name    String   @db.VarChar(200)
+  tel_no         String   @db.VarChar(50)
+  address        String   @db.VarChar(200)
+  licence_no     String   @db.VarChar(200)
+  licence_expiry DateTime @db.Date
+  licence_type   String   @db.VarChar(50)
+  id_no          String   @db.VarChar(20)
+  nok            String   @db.VarChar(200)
+  nok_relation   String   @db.VarChar(50)
+  nok_contact    String   @db.VarChar(50)
+  inactive       Int      @default(0) @db.SmallInt
+
+  @@map("0_drivers")
+}
+
+model earning_deductions {
+  id           Int     @id @default(autoincrement())
+  code         String? @db.VarChar(30)
+  description  String? @db.VarChar(200)
+  type         String? @db.VarChar(50)
+  tax_type     String? @db.VarChar(100)
+  taxable      Int?
+  balances     String? @db.VarChar(50)
+  account_code String  @db.VarChar(50)
+  status       Int?
+
+  @@map("0_earning_deductions")
+}
+
+model employee {
+  id                  Int       @id @default(autoincrement())
+  emp_no              String    @unique(map: "Emp_no") @db.VarChar(120)
+  fname               String    @db.VarChar(120)
+  sname               String    @db.VarChar(120)
+  lname               String?   @db.VarChar(120)
+  id_no               String    @db.VarChar(120)
+  email               String    @db.VarChar(200)
+  nationality         String?   @db.VarChar(200)
+  phone_no            String?   @db.VarChar(200)
+  dob                 DateTime? @db.Date
+  doe                 DateTime  @db.Date
+  department          String    @db.VarChar(200)
+  job_group           String    @db.VarChar(120)
+  designation         String?   @db.VarChar(120)
+  qualification       String?   @db.VarChar(300)
+  m_status            String?   @db.VarChar(120)
+  nhif_no             String?   @db.VarChar(120)
+  nssf_no             String?   @db.VarChar(120)
+  pin_no              String?   @db.VarChar(120)
+  basic_salary        Float     @default(0)
+  bank                String?   @db.VarChar(120)
+  bank_brach          String?   @db.VarChar(120)
+  acc_no              String?   @db.VarChar(120)
+  payee_exempt        Int
+  nssf_exempt         Int?
+  nhif_exempt         Int?
+  housing_levy_exempt Int       @default(0) @db.SmallInt
+  disabled            Int?
+  other_details       String?   @db.VarChar(200)
+  payroll_company     Int
+  suspend_date        DateTime? @db.Date
+  status              Int
+
+  @@index([department], map: "Dept")
+  @@index([job_group], map: "Job_grp")
+  @@index([nhif_no], map: "NHIF")
+  @@index([nssf_no], map: "NSSF")
+  @@index([payee_exempt], map: "emp_status")
+  @@index([fname], map: "fname")
+  @@index([pin_no], map: "kra")
+  @@index([lname], map: "lname")
+  @@index([sname], map: "sname")
+  @@map("0_employee")
+}
+
+model esd_request {
+  id            Int      @id @default(autoincrement())
+  trans_no      Int
+  trans_type    Int
+  request_data  String   @db.Text
+  response_data String   @db.Text
+  status        String   @db.VarChar(100)
+  trans_time    DateTime @default(now()) @db.Timestamp(0)
+  user_name     String   @db.VarChar(100)
+
+  @@map("0_esd_request")
+}
+
+model etims {
+  id            Int      @id @default(autoincrement())
+  request_type  String   @db.VarChar(50)
+  json_request  String   @db.Text
+  status        String   @db.VarChar(10)
+  json_response String   @db.Text
+  username      String   @db.VarChar(50)
+  trans_date    DateTime @default(now()) @db.Timestamp(0)
+  resp_time     DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+
+  @@map("0_etims")
+}
+
+model etims_code_list {
+  id               Int      @id @default(autoincrement())
+  cl_code          String   @db.VarChar(10)
+  cl_name          String   @db.VarChar(50)
+  cl_desc          String   @db.VarChar(50)
+  cl_isused        String   @db.VarChar(10)
+  cl_user_dfn_nm_1 String   @db.VarChar(50)
+  cl_user_dfn_nm_2 String   @db.VarChar(50)
+  cl_user_dfn_nm_3 String   @db.VarChar(50)
+  code             String   @db.VarChar(10)
+  code_name        String   @db.VarChar(20)
+  code_description String   @db.VarChar(50)
+  sort_order       Int
+  is_used          String   @db.VarChar(10)
+  user_dfn_cd_1    String   @db.VarChar(50)
+  user_dfn_cd_2    String   @db.VarChar(50)
+  user_dfn_cd_3    String   @db.VarChar(50)
+  user_name        String   @db.VarChar(20)
+  trans_time       DateTime @default(now()) @db.Timestamp(0)
+  update_time      DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+
+  @@map("0_etims_code_list")
+}
+
+model etims_item_class {
+  id             Int      @id @default(autoincrement())
+  item_cls_code  String   @db.VarChar(50)
+  item_cls_name  String   @db.VarChar(300)
+  item_cls_level String   @db.VarChar(50)
+  taxation_code  String   @db.VarChar(50)
+  major_target   String   @db.VarChar(50)
+  is_used        String   @db.VarChar(50)
+  trans_time     DateTime @default(now()) @db.Timestamp(0)
+  user_name      String   @db.VarChar(50)
+  update_time    DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+
+  @@map("0_etims_item_class")
+}
+
+model etims_stock_categories {
+  id            Int      @id @default(autoincrement())
+  category_name String   @db.VarChar(200)
+  description   String   @db.VarChar(200)
+  user_name     String   @db.VarChar(20)
+  trans_time    DateTime @default(now()) @db.Timestamp(0)
+  update_time   DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+
+  @@map("0_etims_stock_categories")
+}
+
+model etims_stock_master {
+  id          Int    @id @default(autoincrement())
+  stock_id    String @db.VarChar(50)
+  item_code   String @unique(map: "item_code_unique") @db.VarChar(50)
+  description String @db.VarChar(200)
+  item_id     Int
+  category_id String @db.VarChar(20)
+  class_id    String @db.VarChar(20)
+  type_id     String @db.VarChar(20)
+  origin_code String @db.VarChar(20)
+  pack_unit   String @db.VarChar(20)
+  qty_unit    String @db.VarChar(20)
+  tax_type    String @db.VarChar(20)
+  qty         Float
+  price       Float
+
+  @@map("0_etims_stock_master")
+}
+
+model exchange_rates {
+  id        Int      @id @default(autoincrement())
+  curr_code String   @default("") @db.Char(3)
+  rate_buy  Float    @default(0)
+  rate_sell Float    @default(0)
+  date_     DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+
+  @@unique([curr_code, date_], map: "curr_code")
+  @@map("0_exchange_rates")
+}
+
+model fiscal_year {
+  id     Int       @id @default(autoincrement())
+  begin  DateTime? @unique(map: "begin") @default(dbgenerated("('0000-00-00')")) @db.Date
+  end    DateTime? @unique(map: "end") @default(dbgenerated("('0000-00-00')")) @db.Date
+  closed Boolean   @default(false)
+
+  @@map("0_fiscal_year")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model general_cust_sales_notes {
+  id         Int       @id @default(autoincrement())
+  cust_name  String?   @db.VarChar(100)
+  user_id    Int?
+  notes      String?   @db.VarChar(300)
+  trans_date DateTime? @db.Date
+  trans_time String?   @db.VarChar(30)
+  lat        String?   @db.VarChar(200)
+  lon        String?   @db.VarChar(200)
+  address    String?   @db.VarChar(200)
+
+  @@map("0_general_cust_sales_notes")
+}
+
+model gl_trans {
+  counter        Int      @id @default(autoincrement())
+  type           Int      @default(0) @db.SmallInt
+  type_no        Int      @default(0)
+  tran_date      DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  account        String   @default("") @db.VarChar(15)
+  memo_          String   @db.TinyText
+  amount         Float    @default(0)
+  dimension_id   Int      @default(0)
+  dimension2_id  Int      @default(0)
+  person_type_id Int?
+  person_id      Bytes?   @db.TinyBlob
+  original_amt   Float    @default(0) @db.Float
+  old_act_no     Int
+
+  @@index([type, type_no], map: "Type_and_Number")
+  @@index([account, tran_date], map: "account_and_tran_date")
+  @@index([dimension2_id], map: "dimension2_id")
+  @@index([dimension_id], map: "dimension_id")
+  @@index([tran_date], map: "tran_date")
+  @@map("0_gl_trans")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model gl_trans_update {
+  counter        Int      @id @default(autoincrement())
+  type           Int      @default(0) @db.SmallInt
+  type_no        Int      @default(0)
+  tran_date      DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  account        String   @default("") @db.VarChar(15)
+  memo_          String   @db.TinyText
+  amount         Float    @default(0)
+  dimension_id   Int      @default(0)
+  dimension2_id  Int      @default(0)
+  person_type_id Int?
+  person_id      Bytes?   @db.TinyBlob
+
+  @@index([counter], map: "counter")
+  @@map("0_gl_trans_update")
+}
+
+model grn_batch {
+  id             Int      @id @default(autoincrement())
+  supplier_id    Int      @default(0)
+  purch_order_no Int?
+  reference      String   @default("") @db.VarChar(60)
+  delivery_date  DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  loc_code       String?  @db.VarChar(5)
+  rate           Float?   @default(1)
+  wb_ticket_id   Int      @default(0)
+  county_id      Int
+
+  @@index([delivery_date], map: "delivery_date")
+  @@index([purch_order_no], map: "purch_order_no")
+  @@map("0_grn_batch")
+}
+
+model grn_items {
+  id             Int     @id @default(autoincrement())
+  grn_batch_id   Int?
+  po_detail_item Int     @default(0)
+  item_code      String  @default("") @db.VarChar(20)
+  description    String? @db.TinyText
+  qty_recd       Float   @default(0)
+  quantity_inv   Float   @default(0)
+
+  @@index([grn_batch_id], map: "grn_batch_id")
+  @@map("0_grn_items")
+}
+
+model groups {
+  id          Int     @id @default(autoincrement()) @db.UnsignedSmallInt
+  description String  @unique(map: "description") @default("") @db.VarChar(60)
+  inactive    Boolean @default(false)
+
+  @@map("0_groups")
+}
+
+model holidays {
+  id           Int       @id @default(autoincrement())
+  holiday_name String?   @default("") @db.VarChar(200)
+  holiday_date DateTime? @db.Date
+  inactive     Int?      @default(0) @db.SmallInt
+
+  @@map("0_holidays")
+}
+
+model item_codes {
+  id          Int     @id @default(autoincrement()) @db.UnsignedInt
+  item_code   String  @db.VarChar(20)
+  stock_id    String  @db.VarChar(20)
+  description String  @default("") @db.VarChar(200)
+  category_id Int     @db.UnsignedSmallInt
+  quantity    Float   @default(1)
+  is_foreign  Boolean @default(false)
+  inactive    Boolean @default(false)
+
+  @@unique([stock_id, item_code], map: "stock_id")
+  @@index([item_code], map: "item_code")
+  @@map("0_item_codes")
+}
+
+model item_tax_type_exemptions {
+  item_tax_type_id Int @default(0)
+  tax_type_id      Int @default(0)
+
+  @@id([item_tax_type_id, tax_type_id])
+  @@map("0_item_tax_type_exemptions")
+}
+
+model item_tax_types {
+  id       Int     @id @default(autoincrement())
+  name     String  @unique(map: "name") @default("") @db.VarChar(60)
+  exempt   Boolean @default(false)
+  inactive Boolean @default(false)
+
+  @@map("0_item_tax_types")
+}
+
+model item_units {
+  abbr     String  @id @db.VarChar(20)
+  name     String  @unique(map: "name") @db.VarChar(40)
+  decimals Int     @db.TinyInt
+  inactive Boolean @default(false)
+
+  @@map("0_item_units")
+}
+
+model jgroup {
+  id        Int    @id @default(autoincrement())
+  code      String @db.VarChar(200)
+  j_name    String @db.VarChar(200)
+  salary    Float
+  allowance Float
+  status    Int
+
+  @@map("0_jgroup")
+}
+
+model journal {
+  type       Int       @default(0) @db.SmallInt
+  trans_no   Int       @default(0)
+  tran_date  DateTime? @default(dbgenerated("('0000-00-00')")) @db.Date
+  reference  String    @default("") @db.VarChar(60)
+  source_ref String    @default("") @db.VarChar(60)
+  event_date DateTime? @default(dbgenerated("('0000-00-00')")) @db.Date
+  doc_date   DateTime  @default(dbgenerated("('0000-00-00')")) @db.Date
+  currency   String    @default("") @db.Char(3)
+  amount     Float     @default(0)
+  rate       Float     @default(1)
+
+  @@id([type, trans_no])
+  @@index([tran_date], map: "tran_date")
+  @@map("0_journal")
+}
+
+model leads_master {
+  cust_no         Int       @id @default(autoincrement())
+  cust_name       String    @default("") @db.VarChar(100)
+  cust_short_name String    @unique(map: "cust_short_name") @db.VarChar(30)
+  phone_primary   String?   @db.VarChar(30)
+  phone_secondary String?   @db.VarChar(30)
+  address         String?   @db.TinyText
+  email           String?   @db.VarChar(100)
+  salesman        Int       @default(0)
+  notes           String    @db.TinyText
+  active          Boolean   @default(true)
+  converted       Boolean   @default(false)
+  debtor_id       Int?      @default(0)
+  date_created    DateTime  @default(now()) @db.DateTime(0)
+  conversion_date DateTime? @db.Date
+
+  @@map("0_leads_master")
+}
+
+model leave {
+  id     Int    @id @default(autoincrement())
+  empno  String @unique(map: "empno") @db.VarChar(200)
+  Amount Float
+  status Int
+
+  @@map("0_leave")
+}
+
+model leave_balances {
+  id           Int       @id @default(autoincrement())
+  staff_no     String?   @db.VarChar(50)
+  staff_name   String?   @db.VarChar(200)
+  leave_id     Int?      @db.SmallInt
+  leave_type   String?   @db.VarChar(100)
+  balance_date DateTime? @db.Date
+  leave_days   Int?
+  trans_time   DateTime? @db.Timestamp(0)
+  username     Boolean?
+  comments     String?   @db.VarChar(200)
+
+  @@map("0_leave_balances")
+}
+
+model leave_management {
+  id                    Int       @id @default(autoincrement())
+  staff_no              String?   @db.VarChar(50)
+  staff_name            String?   @db.VarChar(200)
+  leave_id              Int?      @db.SmallInt
+  leave_type            String?   @db.VarChar(100)
+  application_date      DateTime? @db.Date
+  leave_start_date      DateTime? @db.Date
+  leave_end_date        DateTime? @db.Date
+  leave_days            Int?
+  resume_date           DateTime? @db.Date
+  leave_approver        String?   @db.VarChar(200)
+  hand_over_to          String?   @db.VarChar(200)
+  reason                String?   @db.VarChar(300)
+  application_time      DateTime? @db.Timestamp(0)
+  approved              Boolean?  @default(false)
+  approve_date          DateTime? @db.Timestamp(0)
+  approved_by           String?   @db.VarChar(50)
+  approver_comments     String?   @db.Text
+  hrm_approved          Boolean?  @default(false)
+  hrm_approve_date      DateTime? @db.Timestamp(0)
+  hrm_approver_comments String?   @db.Text
+  hrm_approved_by       String?   @db.VarChar(50)
+
+  @@map("0_leave_management")
+}
+
+model leave_types {
+  id                Int     @id @default(autoincrement())
+  leave_name        String? @db.VarChar(200)
+  paid              Int?
+  abbreviation      String? @db.Char(2)
+  includes_weekends Int?    @default(0) @db.SmallInt
+  include_holidays  Int?    @default(0) @db.SmallInt
+  days_limit        Float   @default(365)
+  accrued_days      Int?    @default(0)
+  inactive          Int?    @default(0) @db.SmallInt
+
+  @@map("0_leave_types")
+}
+
+model loc_stock {
+  loc_code      String @default("") @db.Char(5)
+  stock_id      String @default("") @db.Char(20)
+  reorder_level Float  @default(0)
+
+  @@id([loc_code, stock_id])
+  @@index([stock_id], map: "stock_id")
+  @@map("0_loc_stock")
+}
+
+model locations {
+  loc_code         String  @id @default("") @db.VarChar(5)
+  location_name    String  @default("") @db.VarChar(60)
+  delivery_address String  @db.TinyText
+  phone            String  @default("") @db.VarChar(30)
+  phone2           String  @default("") @db.VarChar(30)
+  fax              String  @default("") @db.VarChar(30)
+  email            String  @default("") @db.VarChar(100)
+  contact          String  @default("") @db.VarChar(30)
+  fixed_asset      Boolean @default(false)
+  inactive         Boolean @default(false)
+  price_list       Int
+
+  @@map("0_locations")
+}
+
+model maize_grading_parameters {
+  id        Int    @id @default(autoincrement())
+  parameter String @db.VarChar(300)
+  units     String @db.VarChar(10)
+  max_limit String @db.VarChar(50)
+
+  @@map("0_maize_grading_parameters")
+}
+
+model maize_grading_sheet {
+  id         Int      @id @default(autoincrement())
+  tickect_id Int
+  cert_no    Int
+  stack_no   String   @db.VarChar(50)
+  parameter_ String   @db.VarChar(300)
+  max_limit  String   @db.VarChar(50)
+  results    String   @db.VarChar(50)
+  units      String   @db.VarChar(10)
+  memo       String   @db.VarChar(200)
+  outcome    String   @db.VarChar(30)
+  trans_date DateTime @db.Date
+  user_name  String   @db.VarChar(50)
+  trans_time DateTime @default(now()) @db.Timestamp(0)
+
+  @@map("0_maize_grading_sheet")
+}
+
+model maize_grn {
+  id                          Int                           @id @default(autoincrement())
+  supplier_id                 Int
+  vehicle_reg                 String                        @db.VarChar(50)
+  trans_date                  DateTime                      @db.Date
+  memo_                       String                        @db.VarChar(300)
+  closed                      Int                           @default(0) @db.SmallInt
+  user_name                   String                        @db.VarChar(100)
+  created_at                  DateTime                      @default(now()) @db.Timestamp(0)
+  updated_at                  DateTime                      @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  qa_done                     Int                           @default(0) @db.SmallInt
+  qa_date                     DateTime                      @db.Date
+  qa_memo                     String                        @db.VarChar(300)
+  qa_user                     String                        @db.VarChar(50)
+  qa_cert                     Int
+  qa_failed                   Int                           @default(0) @db.SmallInt
+  wb_done                     Int                           @default(0) @db.SmallInt
+  wb_date                     DateTime                      @db.Date
+  wb_memo                     String                        @db.VarChar(200)
+  wb_user                     String                        @db.VarChar(50)
+  wb_ticket_no                Int
+  ol_done                     Int                           @default(0) @db.SmallInt
+  ol_date                     DateTime                      @db.Date
+  ol_memo                     String                        @db.VarChar(200)
+  ol_user                     String                        @db.VarChar(50)
+  ol_no                       Int
+  waste_done                  Int                           @default(0) @db.SmallInt
+  waste_date                  DateTime                      @db.Date
+  waste_memo                  String                        @db.VarChar(200)
+  waste_user                  String                        @db.VarChar(50)
+  waste_no                    Int
+  store_grn_done              Int                           @default(0) @db.SmallInt
+  store_grn_date              DateTime                      @db.Date
+  store_grn_no                Int
+  store_grn_user              String                        @db.VarChar(50)
+  maize_receiving_sheet_trans maize_receiving_sheet_trans[]
+
+  @@map("0_maize_grn")
+}
+
+model maize_receiving_sheet_trans {
+  id                   Int       @id @default(autoincrement())
+  ticket_id            Int
+  no_of_bags           Int
+  first_sample_weight  Int?
+  second_sample_weight Int?
+  third_sample_weight  Int?
+  average_weight       Decimal?  @db.Decimal(10, 2)
+  moisture_content     Decimal?  @db.Decimal(5, 2)
+  remarks              String?   @db.VarChar(1024)
+  stack_no             Int?
+  maize_grn            maize_grn @relation(fields: [ticket_id], references: [id], onDelete: Cascade, map: "fk_receiving_ticket")
+
+  @@index([ticket_id], map: "fk_receiving_ticket")
+  @@map("0_maize_receiving_sheet_trans")
+}
+
+model merchandise_info {
+  id            Int      @id @default(autoincrement())
+  debtor_no     String   @db.VarChar(10)
+  branch_id     String   @db.VarChar(10)
+  trans_time    DateTime @default(now()) @db.Timestamp(0)
+  lat           String   @db.VarChar(50)
+  lon           String   @db.VarChar(50)
+  notes         String   @db.VarChar(255)
+  counter_party String   @db.Text
+  activity_type String   @db.VarChar(50)
+  user_id       String   @db.VarChar(50)
+  image_url     String   @db.VarChar(100)
+  location      String   @db.Text
+
+  @@map("0_merchandise_info")
+}
+
+model merchandiser_assignment {
+  id            Int       @id @default(autoincrement())
+  debtor_no     String?   @db.VarChar(50)
+  branch_code   String    @db.VarChar(50)
+  user_id       String    @db.VarChar(50)
+  task_date     DateTime  @db.Date
+  memo          String?   @db.Text
+  assigned_by   String?   @db.VarChar(50)
+  date_assigned DateTime? @db.Timestamp(0)
+
+  @@map("0_merchandiser_assignment")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model message_footer {
+  footer_msg String? @db.VarChar(200)
+  user       String? @db.VarChar(50)
+
+  @@map("0_message_footer")
+  @@ignore
+}
+
+model messages {
+  id          Int       @id @default(autoincrement())
+  receipient  String?   @db.VarChar(200)
+  message     String?   @db.Text
+  trans_time  DateTime? @default(now()) @db.Timestamp(0)
+  user        String?   @db.VarChar(200)
+  client_name String?   @db.VarChar(200)
+  client_type String?   @db.VarChar(200)
+  trans_id    Int?
+  response    String    @db.Text
+
+  @@map("0_messages")
+}
+
+model mobile_payments_import {
+  id                Int     @id @default(autoincrement())
+  trans_id          String? @db.VarChar(100)
+  completion_time   String? @db.VarChar(100)
+  initiate_time     String? @db.VarChar(100)
+  details           String? @db.VarChar(200)
+  trans_status      String? @db.VarChar(100)
+  debit             Float?
+  credit            Float?
+  balance           Float?
+  balance_confirmed String? @db.VarChar(100)
+  reason            String? @db.VarChar(100)
+  account_no        String? @db.VarChar(100)
+
+  @@map("0_mobile_payments_import")
+}
+
+model mpesa_payments {
+  Auto              Int       @id @default(autoincrement())
+  TransactionType   String    @db.VarChar(40)
+  TransID           String    @unique(map: "trans_id_unique") @db.VarChar(40)
+  TransTime         String    @db.VarChar(40)
+  TransAmount       Float
+  BusinessShortCode String    @db.VarChar(15)
+  BilRef            String    @db.VarChar(60)
+  MSISDN            String    @db.VarChar(20)
+  First_Name        String    @db.VarChar(60)
+  Middle_Name       String    @db.VarChar(60)
+  Last_Name         String    @db.VarChar(60)
+  OrgAccountBalance Float
+  custBalance       Float     @default(0)
+  allocated         Float?    @default(0)
+  trans_date        DateTime? @default(now()) @db.Timestamp(0)
+  transfer_user     String    @db.VarChar(100)
+  transfer_time     DateTime  @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+
+  @@index([BilRef], map: "bill_ref_idx")
+  @@index([trans_date], map: "date_idxx")
+  @@map("0_mpesa_payments")
+}
+
+model mpesa_tills {
+  id              Int    @id @default(autoincrement())
+  till_no         String @db.VarChar(50)
+  short_code      String @db.VarChar(10)
+  bank_act        Int
+  consumer_key    String @db.VarChar(300)
+  consumer_secret String @db.VarChar(300)
+  sec_credential  String @db.Text
+  pass_key        String @db.Text
+  user_name       String @db.VarChar(100)
+  result_url      String @db.VarChar(200)
+  account_id      Int
+  account_gl_code String @db.VarChar(50)
+  inactive        Int    @default(0) @db.SmallInt
+
+  @@map("0_mpesa_tills")
+}
+
+model mpesa_trans_status {
+  id                       Int      @id @default(autoincrement())
+  trans_id                 String   @db.VarChar(50)
+  short_code               String   @db.VarChar(50)
+  OriginatorConversationID String   @db.VarChar(300)
+  ConversationID           String   @db.VarChar(300)
+  ResponseCode             String   @db.VarChar(300)
+  ResponseDescription      String   @db.VarChar(300)
+  TransTime                DateTime @default(now()) @db.Timestamp(0)
+  UserName                 String   @db.VarChar(100)
+  DebitPartyName           String   @db.VarChar(200)
+  CreditPartyName          String   @db.VarChar(200)
+  DebitAccountType         String   @db.VarChar(200)
+  ReasonType               String   @db.VarChar(200)
+  TransactionStatus        String   @db.VarChar(200)
+  FinalisedTime            String   @db.VarChar(200)
+  Amount                   Float
+  ReceiptNo                String   @db.VarChar(200)
+  ResponseTime             DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  TransAction              String   @db.VarChar(50)
+
+  @@map("0_mpesa_trans_status")
+}
+
+model msg_id {
+  id     Int @id @default(autoincrement())
+  status Int
+
+  @@map("0_msg_id")
+}
+
+model payment_terms {
+  terms_indicator        Int     @id @default(autoincrement())
+  terms                  String  @unique(map: "terms") @default("") @db.Char(80)
+  days_before_due        Int     @default(0) @db.SmallInt
+  day_in_following_month Int     @default(0) @db.SmallInt
+  inactive               Boolean @default(false)
+
+  @@map("0_payment_terms")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model paymode {
+  id       Int     @default(autoincrement())
+  paymode  String? @db.VarChar(20)
+  inactive Int?    @db.TinyInt
+
+  @@index([id], map: "id")
+  @@map("0_paymode")
+  @@ignore
+}
+
+model payroll_banks {
+  id     Int     @id @default(autoincrement())
+  bname  String? @db.VarChar(200)
+  code   String? @db.VarChar(10)
+  status Int?
+
+  @@map("0_payroll_banks")
+}
+
+model payroll_banks_branch {
+  id          Int     @id @default(autoincrement())
+  bank_code   String? @db.VarChar(200)
+  branch_code String? @db.VarChar(200)
+  bank_name   String? @db.VarChar(200)
+  branch_name String? @db.VarChar(200)
+
+  @@map("0_payroll_banks_branch")
+}
+
+model payroll_companies {
+  id           Int    @id @default(autoincrement())
+  company_name String @db.VarChar(200)
+  pay_terms    String @db.VarChar(50)
+  inactive     Int    @default(0) @db.SmallInt
+
+  @@map("0_payroll_companies")
+}
+
+model payroll_deduction {
+  id        Int      @id @default(autoincrement())
+  netpay    Float
+  monthpaid String   @db.VarChar(200)
+  yearpaid  String   @db.VarChar(200)
+  tax       Float
+  nssf      Float
+  nhif      Float
+  sacco     Float
+  helb      Float
+  status    Int
+  date      DateTime @db.Date
+
+  @@map("0_payroll_deduction")
+}
+
+model payroll_loans {
+  id                Int       @id @default(autoincrement())
+  staff_no          String?   @db.VarChar(50)
+  staff_name        String?   @db.VarChar(200)
+  deduction         String?   @db.VarChar(200)
+  date              DateTime? @db.Date
+  principal_amt     Float?
+  monthly_deduction Float?
+  organisation      String?   @db.VarChar(200)
+  trans_time        DateTime? @db.Timestamp(0)
+  processed_by      String?   @db.VarChar(100)
+  status            Int?      @default(0)
+
+  @@map("0_payroll_loans")
+}
+
+model payroll_months {
+  id    Int     @id @default(autoincrement())
+  month String? @db.VarChar(200)
+
+  @@map("0_payroll_months")
+}
+
+model payroll_nssf {
+  id          Int     @id @default(autoincrement())
+  tax_type    String? @db.VarChar(200)
+  lower_limit Float?
+  upper_limit Float?
+  rate        Float?
+  charge      Float?
+  description String? @db.VarChar(200)
+
+  @@map("0_payroll_nssf")
+}
+
+model payroll_org {
+  id     Int     @id @default(autoincrement())
+  code   String? @db.VarChar(50)
+  name   String? @db.VarChar(200)
+  status Int?    @default(0)
+
+  @@map("0_payroll_org")
+}
+
+model payroll_rates {
+  id          Int     @id @default(autoincrement())
+  tax_type    String? @db.VarChar(200)
+  lower_limit Float?
+  upper_limit Float?
+  rate        Float?
+  charge      Float?
+
+  @@map("0_payroll_rates")
+}
+
+model payroll_settings {
+  id          Int     @id @default(autoincrement())
+  description String? @db.VarChar(100)
+  value_      String? @db.VarChar(100)
+
+  @@map("0_payroll_settings")
+}
+
+model payroll_years {
+  id   Int     @id @default(autoincrement())
+  year String? @db.VarChar(50)
+
+  @@map("0_payroll_years")
+}
+
+model pos_sales {
+  id                Int     @id @default(autoincrement())
+  ptype             String  @db.VarChar(100)
+  ptotal            String  @db.VarChar(100)
+  payments          String  @db.Text
+  pitems            String  @db.Text
+  cp                String  @db.VarChar(20)
+  uname             String  @db.VarChar(100)
+  uid               Int
+  pdate             String  @db.VarChar(30)
+  print             Boolean @default(true)
+  customername      String  @db.VarChar(200)
+  customerid        Int
+  booking           Int
+  dispatch          Boolean @default(false)
+  salepersonId      Int
+  salepersonName    String  @db.VarChar(100)
+  unique_identifier String  @db.VarChar(200)
+  pin               String  @db.VarChar(50)
+
+  @@map("0_pos_sales")
+}
+
+model pos_sales_orders {
+  id             Int     @id @default(autoincrement())
+  ptype          String  @db.VarChar(100)
+  ptotal         String  @db.VarChar(100)
+  payments       String  @db.Text
+  pitems         String  @db.Text
+  cp             String  @db.VarChar(20)
+  uname          String  @db.VarChar(100)
+  uid            Int
+  pdate          String  @db.VarChar(30)
+  print          Boolean @default(true)
+  customername   String  @db.VarChar(200)
+  customerid     Int
+  booking        Int
+  dispatch       Boolean @default(false)
+  salepersonId   Int
+  salepersonName String  @db.VarChar(100)
+
+  @@map("0_pos_sales_orders")
+}
+
+model postings {
+  id              Int       @id @default(autoincrement())
+  staff_no        String?   @db.VarChar(200)
+  staff_name      String?   @db.VarChar(200)
+  description     String?   @db.VarChar(200)
+  type            String?   @db.VarChar(200)
+  tax_type        String?   @db.VarChar(200)
+  amount          Float?
+  date            DateTime? @db.Date
+  month           String?   @db.VarChar(200)
+  year            String?   @db.VarChar(200)
+  processed_by    String?   @db.VarChar(200)
+  approved        Int?
+  approved_by     String?   @db.VarChar(200)
+  trans_time      DateTime? @db.Timestamp(0)
+  bank            String?   @db.VarChar(200)
+  acc_no          String?   @db.VarChar(200)
+  loan_id         String    @default("''") @db.VarChar(100)
+  payroll_company Int
+
+  @@map("0_postings")
+}
+
+model postings_monthly {
+  id           Int       @id @default(autoincrement())
+  staff_no     String?   @db.VarChar(200)
+  staff_name   String?   @db.VarChar(200)
+  description  String?   @db.VarChar(200)
+  type         String?   @db.VarChar(200)
+  tax_type     String?   @db.VarChar(200)
+  amount       Float?
+  date         DateTime? @db.Date
+  processed_by String?   @db.VarChar(200)
+  approved     Int?
+  approved_by  String?   @db.VarChar(200)
+  trans_time   DateTime? @db.Timestamp(0)
+  source       String    @default("user_action") @db.VarChar(20)
+
+  @@map("0_postings_monthly")
+}
+
+model postings_recurrent {
+  id           Int       @id @default(autoincrement())
+  staff_no     String?   @db.VarChar(200)
+  staff_name   String?   @db.VarChar(200)
+  description  String?   @db.VarChar(200)
+  type         String?   @db.VarChar(200)
+  tax_type     String?   @db.VarChar(200)
+  amount       Float?
+  processed_by String?   @db.VarChar(200)
+  trans_time   DateTime? @db.Timestamp(0)
+
+  @@map("0_postings_recurrent")
+}
+
+model postransac {
+  id            Int      @id @default(autoincrement())
+  trans_id      Int
+  debtor        Int
+  trans_date    DateTime @db.Date
+  amount        Float
+  cost          Float
+  discount      Float
+  user_id       Int
+  type          String   @db.VarChar(200)
+  tendered      Float
+  overpay       Float
+  creditnote    Float
+  cr_amount     Float
+  cbalance      Float
+  topup         Float
+  mode          String   @db.VarChar(200)
+  order_        Int
+  checkout      Int
+  dispatchby    String   @db.VarChar(200)
+  dispatchdate  DateTime @db.Date
+  dispatchstate Int
+  reversestate  Int
+  status        Int
+
+  @@map("0_postransac")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model price_import {
+  code  String @db.VarChar(50)
+  price Float
+
+  @@map("0_price_import")
+  @@ignore
+}
+
+model prices {
+  id            Int    @id @default(autoincrement())
+  stock_id      String @default("") @db.VarChar(20)
+  sales_type_id Int    @default(0)
+  curr_abrev    String @default("") @db.Char(3)
+  price         Float  @default(0)
+
+  @@unique([stock_id, sales_type_id, curr_abrev], map: "price")
+  @@map("0_prices")
+}
+
+model print_profiles {
+  id      Int     @id @default(autoincrement()) @db.UnsignedSmallInt
+  profile String  @db.VarChar(30)
+  report  String? @db.VarChar(5)
+  printer Int?    @db.UnsignedTinyInt
+
+  @@unique([profile, report], map: "profile")
+  @@map("0_print_profiles")
+}
+
+model printers {
+  id          Int    @id @default(autoincrement()) @db.UnsignedTinyInt
+  name        String @unique(map: "name") @db.VarChar(20)
+  description String @db.VarChar(60)
+  queue       String @db.VarChar(20)
+  host        String @db.VarChar(40)
+  port        Int    @db.UnsignedSmallInt
+  timeout     Int    @db.UnsignedTinyInt
+
+  @@map("0_printers")
+}
+
+model purch_data {
+  supplier_id          Int    @default(0)
+  stock_id             String @default("") @db.Char(20)
+  price                Float  @default(0)
+  suppliers_uom        String @default("") @db.Char(50)
+  conversion_factor    Float  @default(1)
+  supplier_description String @default("") @db.Char(200)
+
+  @@id([supplier_id, stock_id])
+  @@map("0_purch_data")
+}
+
+model purch_order_details {
+  po_detail_item    Int      @id @default(autoincrement())
+  order_no          Int      @default(0)
+  item_code         String   @default("") @db.VarChar(20)
+  description       String?  @db.TinyText
+  delivery_date     DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  qty_invoiced      Float    @default(0)
+  unit_price        Float    @default(0)
+  act_price         Float    @default(0)
+  std_cost_unit     Float    @default(0)
+  quantity_ordered  Float    @default(0)
+  quantity_received Float    @default(0)
+
+  @@index([item_code], map: "itemcode")
+  @@index([order_no, po_detail_item], map: "order")
+  @@map("0_purch_order_details")
+}
+
+model purch_orders {
+  order_no            Int      @id @default(autoincrement())
+  supplier_id         Int      @default(0)
+  comments            String?  @db.TinyText
+  ord_date            DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  reference           String   @db.TinyText
+  requisition_no      String?  @db.TinyText
+  into_stock_location String   @default("") @db.VarChar(5)
+  delivery_address    String   @db.TinyText
+  total               Float    @default(0)
+  prep_amount         Float    @default(0)
+  alloc               Float    @default(0)
+  tax_included        Boolean  @default(false)
+
+  @@index([ord_date], map: "ord_date")
+  @@map("0_purch_orders")
+}
+
+model qc_record_sheet {
+  id              Int             @id @default(autoincrement())
+  value           String          @db.VarChar(1024)
+  record_id       Int
+  trans_date      DateTime        @default(now()) @db.Date
+  created_at      DateTime        @default(now()) @db.Timestamp(0)
+  updated_at      DateTime        @default(now()) @db.Timestamp(0)
+  user_name       String          @db.VarChar(256)
+  qc_record_table qc_record_table @relation(fields: [record_id], references: [id], onUpdate: Restrict, map: "fk_record_id")
+
+  @@index([record_id], map: "fk_record_id")
+  @@map("0_qc_record_sheet")
+}
+
+model qc_record_table {
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(512)
+  category        String            @db.VarChar(512)
+  qc_record_sheet qc_record_sheet[]
+
+  @@map("0_qc_record_table")
+}
+
+model quick_entries {
+  id          Int     @id @default(autoincrement()) @db.UnsignedSmallInt
+  type        Boolean @default(false)
+  description String  @db.VarChar(60)
+  usage       String? @db.VarChar(120)
+  base_amount Float   @default(0)
+  base_desc   String? @db.VarChar(60)
+  bal_type    Boolean @default(false)
+
+  @@index([description], map: "description")
+  @@map("0_quick_entries")
+}
+
+model quick_entry_lines {
+  id            Int    @id @default(autoincrement()) @db.UnsignedSmallInt
+  qid           Int    @db.UnsignedSmallInt
+  amount        Float? @default(0)
+  memo          String @db.TinyText
+  action        String @db.VarChar(2)
+  dest_id       String @default("") @db.VarChar(15)
+  dimension_id  Int?   @db.UnsignedSmallInt
+  dimension2_id Int?   @db.UnsignedSmallInt
+
+  @@index([qid], map: "qid")
+  @@map("0_quick_entry_lines")
+}
+
+model ratesettings {
+  id      Int    @id @default(autoincrement())
+  enname  String @db.VarChar(200)
+  details String @db.VarChar(200)
+
+  @@map("0_ratesettings")
+}
+
+model recipients {
+  id          Int     @id @default(autoincrement())
+  id_no       String? @db.VarChar(200)
+  trans_id    Int?
+  client_name String? @db.VarChar(200)
+  client_type String? @db.VarChar(50)
+
+  @@unique([id_no, trans_id], map: "pri")
+  @@map("0_recipients")
+}
+
+model recurrent_invoices {
+  id          Int      @id @default(autoincrement()) @db.UnsignedSmallInt
+  description String   @unique(map: "description") @default("") @db.VarChar(60)
+  order_no    Int      @db.UnsignedInt
+  debtor_no   Int?     @db.UnsignedInt
+  group_no    Int?     @db.UnsignedSmallInt
+  days        Int      @default(0)
+  monthly     Int      @default(0)
+  begin       DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  end         DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  last_sent   DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+
+  @@map("0_recurrent_invoices")
+}
+
+model reference {
+  id     Int    @id @default(autoincrement())
+  ref    String @db.VarChar(200)
+  status Int
+
+  @@map("0_reference")
+}
+
+model reflines {
+  id          Int     @id @default(autoincrement())
+  trans_type  Int
+  prefix      String  @default("") @db.Char(5)
+  pattern     String  @default("1") @db.VarChar(35)
+  description String  @default("") @db.VarChar(60)
+  default     Boolean @default(false)
+  inactive    Boolean @default(false)
+
+  @@unique([trans_type, prefix], map: "prefix")
+  @@map("0_reflines")
+}
+
+model refs {
+  id        Int    @default(0)
+  type      Int    @default(0)
+  reference String @default("") @db.VarChar(100)
+
+  @@id([id, type])
+  @@index([type, reference], map: "Type_and_Reference")
+  @@map("0_refs")
+}
+
+model requisition_details {
+  requisition_detail_id BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
+  requisition_id        Int?
+  item_code             String? @db.VarChar(20)
+  supplier_id           Int?
+  lpo_id                Int?    @default(0)
+  order_quantity        Int     @default(0)
+  estimate_price        Float   @default(0)
+  quantity              Int     @default(0)
+  price                 Float   @default(0)
+  purpose               String? @db.VarChar(320)
+
+  @@index([item_code], map: "0_requisition_details_item_code")
+  @@index([requisition_id], map: "0_requisition_details_requisition_id")
+  @@index([supplier_id], map: "0_requisition_details_supplier_id")
+  @@map("0_requisition_details")
+}
+
+model requisitions {
+  requisition_id   BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  point_of_use     String?  @db.VarChar(50)
+  narrative        String?  @db.VarChar(240)
+  application_date DateTime @default(now()) @db.Timestamp(0)
+  completed        Int      @default(0) @db.TinyInt
+  processed        Int      @default(0) @db.TinyInt
+  inactive         Int      @default(0) @db.TinyInt
+  details          String?  @db.Text
+
+  @@map("0_requisitions")
+}
+
+model sales_expenses {
+  id           Int     @id @default(autoincrement())
+  description  String  @db.VarChar(255)
+  amount       String  @db.VarChar(6)
+  mode_payment String  @db.VarChar(255)
+  payment_date String  @db.VarChar(30)
+  add_date     String  @db.VarChar(30)
+  user         Int
+  publish      Boolean @default(true)
+
+  @@map("0_sales_expenses")
+}
+
+model sales_order_details {
+  id               Int     @id @default(autoincrement())
+  order_no         Int     @default(0)
+  trans_type       Int     @default(30) @db.SmallInt
+  stk_code         String  @default("") @db.VarChar(20)
+  description      String? @db.TinyText
+  qty_sent         Float   @default(0)
+  unit_price       Float   @default(0)
+  quantity         Float   @default(0)
+  invoiced         Float   @default(0)
+  discount_percent Float   @default(0)
+  original_qty     Float
+  batch_no         String  @db.VarChar(100)
+
+  @@index([trans_type, order_no], map: "sorder")
+  @@index([stk_code], map: "stkcode")
+  @@map("0_sales_order_details")
+}
+
+model sales_orders {
+  order_no         Int
+  trans_type       Int      @default(30) @db.SmallInt
+  version          Boolean  @default(false)
+  type             Boolean  @default(false)
+  debtor_no        Int      @default(0)
+  branch_code      Int      @default(0)
+  reference        String   @default("") @db.VarChar(100)
+  customer_ref     String   @db.TinyText
+  comments         String?  @db.TinyText
+  ord_date         DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  order_type       Int      @default(0)
+  ship_via         Int      @default(0)
+  delivery_address String   @db.TinyText
+  contact_phone    String?  @db.VarChar(30)
+  contact_email    String?  @db.VarChar(100)
+  deliver_to       String   @db.TinyText
+  freight_cost     Float    @default(0)
+  from_stk_loc     String   @default("") @db.VarChar(5)
+  delivery_date    DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  payment_terms    Int?
+  total            Float    @default(0)
+  prep_amount      Float    @default(0)
+  alloc            Float    @default(0)
+  user_id          String   @db.VarChar(50)
+  receipt_no       String   @db.VarChar(100)
+
+  @@id([trans_type, order_no])
+  @@index([branch_code, debtor_no], map: "branch_code_match_order")
+  @@map("0_sales_orders")
+}
+
+model sales_pos {
+  id           Int     @id @default(autoincrement()) @db.UnsignedSmallInt
+  pos_name     String  @unique(map: "pos_name") @db.VarChar(30)
+  cash_sale    Boolean
+  credit_sale  Boolean
+  pos_location String  @db.VarChar(5)
+  pos_account  Int     @db.UnsignedSmallInt
+  inactive     Boolean @default(false)
+
+  @@map("0_sales_pos")
+}
+
+model sales_types {
+  id           Int     @id @default(autoincrement())
+  sales_type   String  @unique(map: "sales_type") @default("") @db.Char(50)
+  tax_included Int     @default(0)
+  factor       Float   @default(1)
+  inactive     Boolean @default(false)
+  debtor_no    Int     @default(0)
+
+  @@map("0_sales_types")
+}
+
+model salesman {
+  salesman_code     Int     @id @default(autoincrement())
+  salesman_name     String  @unique(map: "salesman_name") @default("") @db.Char(60)
+  salesman_phone    String  @default("") @db.Char(30)
+  salesman_fax      String  @default("") @db.Char(30)
+  salesman_email    String  @default("") @db.VarChar(100)
+  provision         Float   @default(0)
+  break_pt          Float   @default(0)
+  provision2        Float   @default(0)
+  inactive          Boolean @default(false)
+  commison_per_unit Float?  @default(0) @db.Float
+  user_id           Int
+
+  @@map("0_salesman")
+}
+
+model security_roles {
+  id          Int     @id @default(autoincrement())
+  role        String  @unique(map: "role") @db.VarChar(30)
+  description String? @db.VarChar(50)
+  sections    String? @db.Text
+  areas       String? @db.Text
+  inactive    Boolean @default(false)
+
+  @@map("0_security_roles")
+}
+
+model setnhifnssfamount {
+  id    Int    @id @default(autoincrement())
+  empno String @db.VarChar(200)
+  nssf  Float
+  nhif  Float
+  tax   Float
+
+  @@index([empno], map: "empno")
+  @@map("0_setnhifnssfamount")
+}
+
+model shippers {
+  shipper_id   Int     @id @default(autoincrement())
+  shipper_name String  @unique(map: "name") @default("") @db.VarChar(60)
+  phone        String  @default("") @db.VarChar(30)
+  phone2       String  @default("") @db.VarChar(30)
+  contact      String  @db.TinyText
+  address      String  @db.TinyText
+  inactive     Boolean @default(false)
+
+  @@map("0_shippers")
+}
+
+model sql_trail {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  sql        String   @db.Text
+  result     Boolean
+  msg        String   @db.VarChar(255)
+  user_name  String   @db.VarChar(100)
+  trans_time DateTime @default(now()) @db.Timestamp(0)
+  user_ip    String   @db.VarChar(50)
+
+  @@map("0_sql_trail")
+}
+
+model stock_category {
+  category_id         Int     @id @default(autoincrement())
+  description         String  @unique(map: "description") @default("") @db.VarChar(60)
+  dflt_tax_type       Int     @default(1)
+  dflt_units          String  @default("each") @db.VarChar(20)
+  dflt_mb_flag        String  @default("B") @db.Char(1)
+  dflt_sales_act      String  @default("") @db.VarChar(15)
+  dflt_cogs_act       String  @default("") @db.VarChar(15)
+  dflt_inventory_act  String  @default("") @db.VarChar(15)
+  dflt_adjustment_act String  @default("") @db.VarChar(15)
+  dflt_wip_act        String  @default("") @db.VarChar(15)
+  dflt_dim1           Int?
+  dflt_dim2           Int?
+  inactive            Boolean @default(false)
+  dflt_no_sale        Boolean @default(false)
+  dflt_no_purchase    Boolean @default(false)
+
+  @@map("0_stock_category")
+}
+
+model stock_fa_class {
+  fa_class_id       String  @id @default("") @db.VarChar(20)
+  parent_id         String  @default("") @db.VarChar(20)
+  description       String  @default("") @db.VarChar(200)
+  long_description  String  @db.TinyText
+  depreciation_rate Float   @default(0)
+  inactive          Boolean @default(false)
+
+  @@map("0_stock_fa_class")
+}
+
+model stock_master {
+  stock_id            String   @id @default("") @db.VarChar(20)
+  category_id         Int      @default(0)
+  tax_type_id         Int      @default(0)
+  description         String   @default("") @db.VarChar(200)
+  long_description    String   @db.TinyText
+  units               String   @default("each") @db.VarChar(20)
+  mb_flag             String   @default("B") @db.Char(1)
+  sales_account       String   @default("") @db.VarChar(15)
+  cogs_account        String   @default("") @db.VarChar(15)
+  inventory_account   String   @default("") @db.VarChar(15)
+  adjustment_account  String   @default("") @db.VarChar(15)
+  wip_account         String   @default("") @db.VarChar(15)
+  dimension_id        Int?
+  dimension2_id       Int?
+  purchase_cost       Float    @default(0)
+  material_cost       Float    @default(0)
+  labour_cost         Float    @default(0)
+  overhead_cost       Float    @default(0)
+  inactive            Boolean  @default(false)
+  no_sale             Boolean  @default(false)
+  no_purchase         Boolean  @default(false)
+  editable            Boolean  @default(false)
+  depreciation_method String   @default("S") @db.Char(1)
+  depreciation_rate   Float    @default(0)
+  depreciation_factor Float    @default(1)
+  depreciation_start  DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  depreciation_date   DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  fa_class_id         String   @default("") @db.VarChar(20)
+  material_weight     Float    @default(0)
+  item_commission     Float    @default(0)
+  salvage_value       Float    @default(0)
+  current_value       Float
+  useful_life         Int
+  yom                 DateTime @db.Date
+  location            String   @db.VarChar(100)
+  hs_code             String   @db.VarChar(100)
+  apply_batching      Int      @default(0) @db.SmallInt
+
+  @@map("0_stock_master")
+}
+
+model stock_moves {
+  trans_id       Int      @id @default(autoincrement())
+  trans_no       Int      @default(0)
+  stock_id       String   @default("") @db.Char(20)
+  type           Int      @default(0) @db.SmallInt
+  loc_code       String   @default("") @db.Char(5)
+  tran_date      DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  price          Float    @default(0)
+  reference      String   @default("") @db.Char(40)
+  qty            Float    @default(1)
+  standard_cost  Float    @default(0)
+  approved       Int      @db.SmallInt
+  ref_no         String   @db.VarChar(50)
+  gate_pass_no   String   @db.VarChar(50)
+  reconciled     Int      @default(0) @db.SmallInt
+  user_name      String?  @db.VarChar(50)
+  batch_no       String   @db.VarChar(100)
+  shift          String   @db.VarChar(50)
+  etims_uploaded Int      @default(0) @db.SmallInt
+  etims_balance  Float
+  etims_user     String   @db.VarChar(20)
+  etims_time     DateTime @default(now()) @db.Timestamp(0)
+
+  @@index([stock_id, loc_code, tran_date], map: "Move")
+  @@index([type, trans_no], map: "type")
+  @@map("0_stock_moves")
+}
+
+model stock_requisition {
+  id                            Int                             @id @default(autoincrement())
+  origin_store                  String                          @db.VarChar(50)
+  dest_store                    String                          @db.VarChar(50)
+  items                         String                          @db.Text
+  user_id                       Int                             @default(0)
+  request_date                  String?                         @db.VarChar(30)
+  approval_id                   Int                             @default(0)
+  approval_date                 String?                         @db.VarChar(30)
+  issuer_id                     Int                             @default(0)
+  issue_date                    String?                         @db.VarChar(30)
+  is_closed                     Boolean                         @default(false)
+  stock_requisition_issue_trans stock_requisition_issue_trans[]
+
+  @@map("0_stock_requisition")
+}
+
+model stock_requisition_issue_trans {
+  id                   Int               @id @default(autoincrement())
+  stock_requisition_id Int
+  issuer_id            Int               @db.SmallInt
+  trans_date           DateTime?         @default(now()) @db.Date
+  created_at           DateTime          @default(now()) @db.Timestamp(0)
+  items                String            @db.LongText
+  users                users             @relation(fields: [issuer_id], references: [id], onUpdate: Restrict, map: "fk_issuer_id")
+  stock_requisition    stock_requisition @relation(fields: [stock_requisition_id], references: [id], onUpdate: Restrict, map: "fk_stock_requisition_id")
+
+  @@index([issuer_id], map: "fk_issuer_id")
+  @@index([stock_requisition_id], map: "fk_stock_requisition_id")
+  @@map("0_stock_requisition_issue_trans")
+}
+
+model stock_returns {
+  id               Int      @id @default(autoincrement())
+  debtor_no        Int
+  branch_code      Int
+  invoice_no       Int
+  items            String   @db.Text
+  trans_time       DateTime @default(now()) @db.Timestamp(0)
+  user_id          Int
+  delivered        Int      @default(0) @db.SmallInt
+  delivery_notes   String   @db.VarChar(300)
+  delivery_time    DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  delivery_user_id String   @db.VarChar(10)
+  closed           Int      @default(0) @db.SmallInt
+
+  @@map("0_stock_returns")
+}
+
+model stock_returns_details {
+  id             Int      @id @default(autoincrement())
+  stock_id       String   @db.VarChar(50)
+  description    String   @db.VarChar(200)
+  quantity       Float
+  unit_price     Float
+  batch_no       String   @db.VarChar(50)
+  return_id      Int
+  qa_review      Int      @default(0) @db.SmallInt
+  memo_          String   @db.VarChar(200)
+  action_        String   @db.VarChar(200)
+  reason_        String   @db.VarChar(200)
+  update_time    DateTime @default(now()) @db.Timestamp(0)
+  user_name      String   @db.VarChar(50)
+  closed         Int      @default(0) @db.SmallInt
+  credit_note_no String   @db.VarChar(10)
+
+  @@map("0_stock_returns_details")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model stock_take {
+  id              Int
+  stock_take_id   Int
+  stock_id        String  @db.VarChar(50)
+  description     String  @db.VarChar(200)
+  quantity_before String  @db.VarChar(10)
+  quantity_after  String  @db.VarChar(10)
+  user_id         Int
+  location        String  @db.VarChar(30)
+  trans_date      String  @db.VarChar(30)
+  approved        Int
+  approval_date   String? @default("") @db.VarChar(30)
+  qty_approved    Int?    @default(0)
+  standard_cost   Float?  @default(0)
+  adjustment_no   String? @default("") @db.VarChar(30)
+
+  @@map("0_stock_take")
+  @@ignore
+}
+
+model storage_batch {
+  id            Int      @id @default(autoincrement())
+  supplier_id   Int      @default(0)
+  reference     String   @default("") @db.VarChar(60)
+  delivery_date DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  loc_code      String?  @db.VarChar(5)
+  wb_ticket_id  Int      @default(0)
+  supp_reff     String   @db.VarChar(50)
+
+  @@index([delivery_date], map: "delivery_date")
+  @@map("0_storage_batch")
+}
+
+model store_allocation {
+  id       Int    @id @default(autoincrement())
+  loc_code String @db.VarChar(50)
+  user_id  String @db.VarChar(50)
+  activity String @db.VarChar(100)
+
+  @@map("0_store_allocation")
+}
+
+model supp_allocations {
+  id              Int      @id @default(autoincrement())
+  person_id       Int?
+  amt             Float?
+  date_alloc      DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  trans_no_from   Int?
+  trans_type_from Int?
+  trans_no_to     Int?
+  trans_type_to   Int?
+
+  @@unique([person_id, trans_type_from, trans_no_from, trans_type_to, trans_no_to], map: "trans_type_from")
+  @@index([trans_type_from, trans_no_from], map: "From")
+  @@index([trans_type_to, trans_no_to], map: "To")
+  @@map("0_supp_allocations")
+}
+
+model supp_allocations_voucher {
+  id              Int      @id @default(autoincrement())
+  person_id       Int?
+  amt             Float?
+  date_alloc      DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  trans_no_from   Int?
+  trans_type_from Int?
+  trans_no_to     Int?
+  trans_type_to   Int?
+
+  @@unique([person_id, trans_type_from, trans_no_from, trans_type_to, trans_no_to], map: "trans_type_from")
+  @@index([trans_type_from, trans_no_from], map: "From")
+  @@index([trans_type_to, trans_no_to], map: "To")
+  @@map("0_supp_allocations_voucher")
+}
+
+model supp_gl_voucher {
+  counter        Int      @id @default(autoincrement())
+  type           Int      @default(0) @db.SmallInt
+  type_no        Int      @default(0)
+  tran_date      DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  account        String   @default("") @db.VarChar(15)
+  memo_          String   @db.TinyText
+  amount         Float    @default(0)
+  dimension_id   Int      @default(0)
+  dimension2_id  Int      @default(0)
+  person_type_id Int?
+  person_id      Bytes?   @db.TinyBlob
+  original_amt   Float    @default(0) @db.Float
+
+  @@index([type, type_no], map: "Type_and_Number")
+  @@index([account, tran_date], map: "account_and_tran_date")
+  @@index([dimension2_id], map: "dimension2_id")
+  @@index([dimension_id], map: "dimension_id")
+  @@index([tran_date], map: "tran_date")
+  @@map("0_supp_gl_voucher")
+}
+
+model supp_invoice_items {
+  id                Int     @id @default(autoincrement())
+  supp_trans_no     Int?
+  supp_trans_type   Int?
+  gl_code           String  @default("") @db.VarChar(15)
+  grn_item_id       Int?
+  po_detail_item_id Int?
+  stock_id          String  @default("") @db.VarChar(20)
+  description       String? @db.TinyText
+  quantity          Float   @default(0)
+  unit_price        Float   @default(0)
+  unit_tax          Float   @default(0)
+  memo_             String? @db.TinyText
+  dimension_id      Int     @default(0)
+  dimension2_id     Int     @default(0)
+  vehicle           String  @db.VarChar(50)
+  mileage           Int
+
+  @@index([supp_trans_type, supp_trans_no, stock_id], map: "Transaction")
+  @@map("0_supp_invoice_items")
+}
+
+model supp_trans {
+  trans_no       Int      @default(0) @db.UnsignedInt
+  type           Int      @default(0) @db.UnsignedSmallInt
+  supplier_id    Int      @db.UnsignedInt
+  reference      String   @db.TinyText
+  supp_reference String   @default("") @db.VarChar(60)
+  tran_date      DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  due_date       DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  ov_amount      Float    @default(0)
+  ov_discount    Float    @default(0)
+  ov_gst         Float    @default(0)
+  rate           Float    @default(1)
+  alloc          Float    @default(0)
+  tax_included   Boolean  @default(false)
+
+  @@id([type, trans_no, supplier_id])
+  @@index([supplier_id], map: "supplier_id")
+  @@index([tran_date], map: "tran_date")
+  @@map("0_supp_trans")
+}
+
+model supp_voucher {
+  trans_no       Int      @default(0) @db.UnsignedInt
+  type           Int      @default(0) @db.UnsignedSmallInt
+  supplier_id    Int      @db.UnsignedInt
+  reference      String   @db.TinyText
+  supp_reference String   @default("") @db.VarChar(60)
+  tran_date      DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  due_date       DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  ov_amount      Float    @default(0)
+  ov_discount    Float    @default(0)
+  ov_gst         Float    @default(0)
+  rate           Float    @default(1)
+  alloc          Float    @default(0)
+  tax_included   Boolean  @default(false)
+  approved       Int?     @default(0)
+  approved_by    String?  @default("") @db.VarChar(50)
+  user_name      String   @db.VarChar(10)
+  gl_item        Boolean  @default(false)
+  memo_          String   @db.Text
+
+  @@id([type, trans_no, supplier_id])
+  @@index([supplier_id], map: "supplier_id")
+  @@index([tran_date], map: "tran_date")
+  @@map("0_supp_voucher")
+}
+
+model suppliers {
+  supplier_id              Int     @id @default(autoincrement())
+  supp_name                String  @unique(map: "supp_name_unique_idx") @default("") @db.VarChar(60)
+  supp_ref                 String  @default("") @db.VarChar(30)
+  address                  String  @db.TinyText
+  supp_address             String  @db.TinyText
+  gst_no                   String  @default("") @db.VarChar(25)
+  contact                  String  @default("") @db.VarChar(60)
+  supp_account_no          String  @default("") @db.VarChar(40)
+  website                  String  @default("") @db.VarChar(100)
+  bank_account             String  @default("") @db.VarChar(60)
+  curr_code                String? @db.Char(3)
+  payment_terms            Int?
+  tax_included             Boolean @default(false)
+  dimension_id             Int?    @default(0)
+  dimension2_id            Int?    @default(0)
+  tax_group_id             Int?
+  credit_limit             Float   @default(0)
+  purchase_account         String  @default("") @db.VarChar(15)
+  payable_account          String  @default("") @db.VarChar(15)
+  payment_discount_account String  @default("") @db.VarChar(15)
+  notes                    String  @db.TinyText
+  id_no                    String  @db.VarChar(100)
+  inactive                 Boolean @default(false)
+
+  @@index([supp_ref], map: "supp_ref")
+  @@map("0_suppliers")
+}
+
+model survey_answers {
+  id                   Int      @id @default(autoincrement())
+  question             String   @db.Text
+  question_id          String   @db.VarChar(50)
+  merchandiser_info_id String   @db.VarChar(50)
+  answer_string        String   @db.VarChar(200)
+  trans_date           DateTime @default(now()) @db.Timestamp(0)
+  user_name            String   @db.VarChar(50)
+
+  @@map("0_survey_answers")
+}
+
+model survey_questionnaire {
+  id            Int      @id @default(autoincrement())
+  question      String   @db.Text
+  close_ended   Int      @db.SmallInt
+  answer_string String   @db.VarChar(200)
+  trans_date    DateTime @default(now()) @db.Timestamp(0)
+  user_name     String   @db.VarChar(50)
+  inactive      Int      @default(0) @db.SmallInt
+
+  @@map("0_survey_questionnaire")
+}
+
+model sys_prefs {
+  name     String  @id @default("") @db.VarChar(35)
+  category String? @db.VarChar(30)
+  type     String  @default("") @db.VarChar(20)
+  length   Int?    @db.SmallInt
+  value    String  @db.Text
+
+  @@index([category], map: "category")
+  @@map("0_sys_prefs")
+}
+
+model tag_associations {
+  record_id String @db.VarChar(15)
+  tag_id    Int
+
+  @@unique([record_id, tag_id], map: "record_id")
+  @@map("0_tag_associations")
+}
+
+model tags {
+  id          Int     @id @default(autoincrement())
+  type        Int     @db.SmallInt
+  name        String  @db.VarChar(30)
+  description String? @db.VarChar(60)
+  inactive    Boolean @default(false)
+
+  @@unique([type, name], map: "type")
+  @@map("0_tags")
+}
+
+model targets {
+  id                 Int     @id @default(autoincrement())
+  server_date        String  @db.VarChar(30)
+  target_date        String  @db.VarChar(30)
+  target_description String  @db.Text
+  target_comments    String  @db.Text
+  userid             Int
+  username           String  @db.VarChar(50)
+  createdby          Int
+  status             Boolean @default(true)
+  target_item        String  @db.VarChar(200)
+  type               String  @db.VarChar(1)
+  target_qty         String  @db.VarChar(30)
+  unit_weight        Int
+
+  @@map("0_targets")
+}
+
+model tasks {
+  id               Int     @id @default(autoincrement())
+  server_date      String  @db.VarChar(30)
+  task_date        String  @db.VarChar(30)
+  task_description String  @db.Text
+  task_comments    String  @db.Text
+  userid           Int
+  username         String  @db.VarChar(50)
+  createdby        Int
+  status           Boolean @default(true)
+
+  @@map("0_tasks")
+}
+
+model tax_group_items {
+  tax_group_id Int     @default(0)
+  tax_type_id  Int     @default(0)
+  tax_shipping Boolean @default(false)
+
+  @@id([tax_group_id, tax_type_id])
+  @@map("0_tax_group_items")
+}
+
+model tax_groups {
+  id       Int     @id @default(autoincrement())
+  name     String  @unique(map: "name") @default("") @db.VarChar(60)
+  inactive Boolean @default(false)
+
+  @@map("0_tax_groups")
+}
+
+model tax_types {
+  id                 Int     @id @default(autoincrement())
+  rate               Float   @default(0)
+  sales_gl_code      String  @default("") @db.VarChar(15)
+  purchasing_gl_code String  @default("") @db.VarChar(15)
+  name               String  @default("") @db.VarChar(60)
+  inactive           Boolean @default(false)
+
+  @@map("0_tax_types")
+}
+
+model taxnssfnhif {
+  id    Int    @id @default(autoincrement())
+  empno String @unique(map: "empno") @db.VarChar(200)
+  nssf  String @db.VarChar(100)
+  nhif  String @db.VarChar(100)
+  tax   String @db.VarChar(100)
+
+  @@map("0_taxnssfnhif")
+}
+
+model time_sheet {
+  id               Int       @id @default(autoincrement())
+  emp_no           String?   @db.VarChar(200)
+  absentism_reason String?   @db.VarChar(200)
+  date             DateTime? @db.Date
+  trans_id         Int?
+  reason           String?   @db.VarChar(200)
+  user_name        String?   @db.VarChar(100)
+
+  @@unique([emp_no, date, trans_id], map: "pri")
+  @@map("0_time_sheet")
+}
+
+model trans_id {
+  id     Int @id @default(autoincrement())
+  status Int
+
+  @@map("0_trans_id")
+}
+
+model trans_tax_details {
+  id                Int      @id @default(autoincrement())
+  trans_type        Int?     @db.SmallInt
+  trans_no          Int?
+  tran_date         DateTime @db.Date
+  tax_type_id       Int      @default(0)
+  rate              Float    @default(0)
+  ex_rate           Float    @default(1)
+  included_in_price Boolean  @default(false)
+  net_amount        Float    @default(0)
+  amount            Float    @default(0)
+  memo              String?  @db.TinyText
+  reg_type          Boolean?
+
+  @@index([trans_type, trans_no], map: "Type_and_Number")
+  @@index([tran_date], map: "tran_date")
+  @@map("0_trans_tax_details")
+}
+
+model transactions {
+  id            Int      @id @default(autoincrement())
+  tid           String   @db.VarChar(200)
+  date_of_trans DateTime @db.Date
+  dateandtime   DateTime @default(now()) @db.Timestamp(0)
+  status        Int
+
+  @@map("0_transactions")
+}
+
+model trips {
+  id          Int    @id @default(autoincrement())
+  start_date  String @db.VarChar(30)
+  end_date    String @db.VarChar(30)
+  description String @db.Text
+  userid      Int
+  uname       String @db.VarChar(100)
+
+  @@map("0_trips")
+}
+
+model user_location {
+  id          Int    @id @default(autoincrement())
+  lat         String @db.VarChar(50)
+  lon         String @db.VarChar(50)
+  speed       String @db.VarChar(20)
+  heading     String @db.VarChar(10)
+  server_time String @db.VarChar(50)
+  gps_time    Int
+  accuracy    String @db.VarChar(10)
+  bat         String @db.VarChar(10)
+  userid      Int
+  uname       String @db.VarChar(20)
+  address     String @db.VarChar(200)
+
+  @@map("0_user_location")
+}
+
+model user_locations {
+  id          Int    @id @default(autoincrement())
+  lat         String @db.VarChar(50)
+  lon         String @db.VarChar(50)
+  speed       String @db.VarChar(20)
+  heading     String @db.VarChar(10)
+  server_time String @db.VarChar(50)
+  gps_time    Int
+  accuracy    String @db.VarChar(10)
+  bat         String @db.VarChar(10)
+  userid      Int
+  address     String @db.VarChar(200)
+
+  @@map("0_user_locations")
+}
+
+model useronline {
+  id        Int    @id @default(autoincrement())
+  timestamp Int    @default(0)
+  ip        String @default("") @db.VarChar(40)
+  file      String @default("") @db.VarChar(100)
+
+  @@index([ip], map: "ip")
+  @@index([timestamp], map: "timestamp")
+  @@map("0_useronline")
+}
+
+model users {
+  id                            Int                             @id @default(autoincrement()) @db.SmallInt
+  user_id                       String                          @unique(map: "user_id") @default("") @db.VarChar(60)
+  password                      String                          @default("") @db.VarChar(100)
+  real_name                     String                          @default("") @db.VarChar(100)
+  role_id                       Int                             @default(1)
+  phone                         String                          @default("") @db.VarChar(30)
+  email                         String?                         @db.VarChar(100)
+  language                      String?                         @db.VarChar(20)
+  date_format                   Boolean                         @default(false)
+  date_sep                      Boolean                         @default(false)
+  tho_sep                       Boolean                         @default(false)
+  dec_sep                       Boolean                         @default(false)
+  theme                         String                          @default("default") @db.VarChar(20)
+  page_size                     String                          @default("A4") @db.VarChar(20)
+  prices_dec                    Int                             @default(2) @db.SmallInt
+  qty_dec                       Int                             @default(2) @db.SmallInt
+  rates_dec                     Int                             @default(4) @db.SmallInt
+  percent_dec                   Int                             @default(1) @db.SmallInt
+  show_gl                       Boolean                         @default(true)
+  show_codes                    Boolean                         @default(false)
+  show_hints                    Boolean                         @default(false)
+  last_visit_date               DateTime?                       @db.DateTime(0)
+  query_size                    Int                             @default(10) @db.UnsignedTinyInt
+  graphic_links                 Boolean?                        @default(true)
+  pos                           Int?                            @default(1) @db.SmallInt
+  print_profile                 String                          @default("") @db.VarChar(30)
+  rep_popup                     Boolean?                        @default(true)
+  sticky_doc_date               Boolean?                        @default(false)
+  startup_tab                   String                          @default("") @db.VarChar(20)
+  transaction_days              Int                             @default(30) @db.SmallInt
+  save_report_selections        Int                             @default(0) @db.SmallInt
+  use_date_picker               Boolean                         @default(true)
+  def_print_destination         Boolean                         @default(false)
+  def_print_orientation         Boolean                         @default(false)
+  inactive                      Boolean                         @default(false)
+  token                         String                          @db.Text
+  token_date                    String                          @db.VarChar(30)
+  pin                           String                          @db.VarChar(100)
+  disc_auth                     Boolean                         @default(false)
+  default_store                 String                          @default("DEF") @db.VarChar(10)
+  last_pass_change              DateTime                        @db.Date
+  stock_requisition_issue_trans stock_requisition_issue_trans[]
+
+  @@map("0_users")
+}
+
+model vehicle_exp_category {
+  id       Int    @id @default(autoincrement())
+  category String @db.VarChar(200)
+  inactive Int    @default(0) @db.SmallInt
+
+  @@map("0_vehicle_exp_category")
+}
+
+model vehicle_settings {
+  id          Int    @id @default(autoincrement())
+  description String @default("") @db.VarChar(200)
+  value_      String @default("") @db.VarChar(100)
+
+  @@map("0_vehicle_settings")
+}
+
+model vehicle_shifts {
+  id       Int     @id @default(autoincrement())
+  shift    String? @default("") @db.VarChar(50)
+  inactive Int?    @default(0) @db.TinyInt
+
+  @@map("0_vehicle_shifts")
+}
+
+model vehicle_type {
+  id           Int    @id @default(autoincrement())
+  vehicle_type String @db.VarChar(100)
+
+  @@map("0_vehicle_type")
+}
+
+model vehicles {
+  id       Int     @id @default(autoincrement())
+  reg_no   String  @unique(map: "name") @default("") @db.VarChar(40)
+  reg_date String  @default("") @db.VarChar(50)
+  model    String? @default("") @db.VarChar(100)
+  make     String? @default("") @db.VarChar(50)
+  yom      String? @default("") @db.VarChar(50)
+  type     String? @default("") @db.VarChar(50)
+  inactive Boolean @default(false)
+
+  @@map("0_vehicles")
+}
+
+model voided {
+  type  Int      @default(0)
+  id    Int      @default(0)
+  date_ DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+  memo_ String   @db.TinyText
+
+  @@unique([type, id], map: "id")
+  @@map("0_voided")
+}
+
+model waste_defective_items {
+  id              Int                            @id @default(autoincrement())
+  category        waste_defective_items_category
+  quantity        Float
+  waste_record_id Int
+  created_at      DateTime                       @default(now()) @db.Timestamp(0)
+  updated_at      DateTime                       @default(now()) @db.Timestamp(0)
+  stock_id        String?                        @db.VarChar(20)
+  waste_record    waste_record                   @relation(fields: [waste_record_id], references: [id], onDelete: Cascade, map: "0_waste_defective_items_ibfk_1")
+
+  @@index([waste_record_id], map: "waste_record_id")
+  @@map("0_waste_defective_items")
+}
+
+model waste_record {
+  id                    Int                     @id @default(autoincrement())
+  spillage_comment      String                  @db.VarChar(1024)
+  work_order_id         Int
+  created_at            DateTime                @default(now()) @db.Timestamp(0)
+  updated_at            DateTime                @default(now()) @db.Timestamp(0)
+  spoilt_comment        String                  @default("") @db.VarChar(1024)
+  defective_comment     String                  @default("") @db.VarChar(1024)
+  waste_defective_items waste_defective_items[]
+  workorders            workorders              @relation(fields: [work_order_id], references: [id], onDelete: Cascade, map: "0_waste_record_ibfk_1")
+
+  @@index([work_order_id], map: "work_order_id")
+  @@map("0_waste_record")
+}
+
+model weight_data {
+  id             Int      @id @default(autoincrement())
+  trans_type     String   @db.VarChar(50)
+  trans_no       String   @db.VarChar(100)
+  trans_id       String   @db.VarChar(50)
+  trans_date     DateTime @db.Date
+  source_id      Int
+  source_name    String   @db.VarChar(200)
+  dest_id        Int
+  dest_name      String   @db.VarChar(200)
+  memo           String   @db.VarChar(300)
+  first_weight   Float
+  second_weight  Float
+  loaded         Int      @db.SmallInt
+  charges        Float
+  trans_time     DateTime @default(now()) @db.Timestamp(0)
+  user_id        String   @db.VarChar(50)
+  driver         String   @db.VarChar(100)
+  trans_times    DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  registered     Int      @default(0)
+  ticket_id      Int
+  waste_included Int      @default(0) @db.SmallInt
+  waste_weight   Float
+  waste_units    String   @db.VarChar(50)
+
+  @@map("0_weight_data")
+}
+
+model wo_costing {
+  id           Int     @id @default(autoincrement())
+  workorder_id Int     @default(0)
+  cost_type    Boolean @default(false)
+  trans_type   Int     @default(0)
+  trans_no     Int     @default(0)
+  factor       Float   @default(1)
+
+  @@map("0_wo_costing")
+}
+
+model wo_issue_items {
+  id         Int     @id @default(autoincrement())
+  stock_id   String? @db.VarChar(40)
+  issue_id   Int?
+  qty_issued Float?
+  unit_cost  Float   @default(0)
+
+  @@map("0_wo_issue_items")
+}
+
+model wo_issues {
+  issue_no      Int       @id @default(autoincrement())
+  workorder_id  Int       @default(0)
+  reference     String?   @db.VarChar(100)
+  issue_date    DateTime? @db.Date
+  loc_code      String?   @db.VarChar(5)
+  workcentre_id Int?
+
+  @@index([workorder_id], map: "workorder_id")
+  @@map("0_wo_issues")
+}
+
+model wo_manufacture {
+  id           Int      @id @default(autoincrement())
+  reference    String?  @db.VarChar(100)
+  workorder_id Int      @default(0)
+  quantity     Float    @default(0)
+  date_        DateTime @default(dbgenerated("('0000-00-00')")) @db.Date
+
+  @@index([workorder_id], map: "workorder_id")
+  @@map("0_wo_manufacture")
+}
+
+model wo_requirements {
+  id           Int    @id @default(autoincrement())
+  workorder_id Int    @default(0)
+  stock_id     String @default("") @db.Char(20)
+  workcentre   Int    @default(0)
+  units_req    Float  @default(1)
+  unit_cost    Float  @default(0)
+  loc_code     String @default("") @db.Char(5)
+  units_issued Float  @default(0)
+  batch_no     String @db.VarChar(100)
+
+  @@index([workorder_id], map: "workorder_id")
+  @@map("0_wo_requirements")
+}
+
+model workcentres {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique(map: "name") @default("") @db.Char(40)
+  description String  @default("") @db.Char(50)
+  inactive    Boolean @default(false)
+
+  @@map("0_workcentres")
+}
+
+model workorders {
+  id               Int            @id @default(autoincrement())
+  wo_ref           String         @unique(map: "wo_ref") @default("") @db.VarChar(60)
+  loc_code         String         @default("") @db.VarChar(5)
+  units_reqd       Float          @default(1)
+  stock_id         String         @default("") @db.VarChar(20)
+  date_            DateTime       @default(dbgenerated("('0000-00-00')")) @db.Date
+  type             Int            @default(0) @db.TinyInt
+  required_by      DateTime       @default(dbgenerated("('0000-00-00')")) @db.Date
+  released_date    DateTime       @default(dbgenerated("('0000-00-00')")) @db.Date
+  units_issued     Float          @default(0)
+  closed           Boolean        @default(false)
+  released         Boolean        @default(false)
+  additional_costs Float          @default(0)
+  user_name        String         @db.VarChar(20)
+  batch_no         String         @db.VarChar(100)
+  waste_record     waste_record[]
+
+  @@index([stock_id], map: "stock_id_idx")
+  @@map("0_workorders")
+}
+
+model zencart {
+  name  String @id @default("") @db.Char(15)
+  value String @default("") @db.VarChar(100)
+
+  @@map("0_zencart")
+}
+
+enum waste_defective_items_category {
+  Defective
+  spoilt
+
+  @@map("0_waste_defective_items_category")
+}
